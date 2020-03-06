@@ -7,6 +7,16 @@ properties(projectProperties)
 
 def SUCCESS = hudson.model.Result.SUCCESS.toString()
 currentBuild.result = SUCCESS
+def GRADLE_ENTERPRISE_CACHE_USER = usernamePassword(credentialsId: 'gradle_enterprise_cache_user',
+									passwordVariable: 'GRADLE_ENTERPRISE_CACHE_PASSWORD',
+									usernameVariable: 'GRADLE_ENTERPRISE_CACHE_USERNAME')
+def GRADLE_ENTERPRISE_SECRET_ACCESS_KEY = string(credentialsId: 'gradle_enterprise_secret_access_key',
+								variable: 'GRADLE_ENTERPRISE_ACCESS_KEY')
+
+def jdkEnv(String jdk = 'jdk8') {
+	def jdkTool = tool(jdk)
+	return "JAVA_HOME=${ jdkTool }"
+}
 
 try {
 	parallel check: {
@@ -15,12 +25,9 @@ try {
 				checkout scm
 				sh "git clean -dfx"
 				try {
-					withCredentials([usernamePassword(credentialsId: 'gradle_enterprise_cache_user',
-							passwordVariable: 'GRADLE_ENTERPRISE_CACHE_PASSWORD',
-							usernameVariable: 'GRADLE_ENTERPRISE_CACHE_USERNAME'),
-                        string(credentialsId: 'gradle_enterprise_secret_access_key',
-							variable: 'GRADLE_ENTERPRISE_ACCESS_KEY')]) {
-							withEnv(["JAVA_HOME=${ tool 'jdk8' }",
+					withCredentials([GRADLE_ENTERPRISE_CACHE_USER,
+						GRADLE_ENTERPRISE_SECRET_ACCESS_KEY]) {
+							withEnv([jdkEnv(),
 							"GRADLE_ENTERPRISE_CACHE_USERNAME=${GRADLE_ENTERPRISE_CACHE_USERNAME}",
 							"GRADLE_ENTERPRISE_CACHE_PASSWORD=${GRADLE_ENTERPRISE_CACHE_PASSWORD}",
 							"GRADLE_ENTERPRISE_ACCESS_KEY=${GRADLE_ENTERPRISE_ACCESS_KEY}"]) {
