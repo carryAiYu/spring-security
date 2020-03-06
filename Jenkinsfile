@@ -18,7 +18,7 @@ def SPRING_GPG_PASSPHRASE = string(credentialsId: 'spring-gpg-passphrase', varia
 def OSSRH_CREDENTIALS = usernamePassword(credentialsId: 'oss-token', passwordVariable: 'OSSRH_PASSWORD', usernameVariable: 'OSSRH_USERNAME')
 def ARTIFACTORY_CREDENTIALS = usernamePassword(credentialsId: '02bd1690-b54f-4c9f-819d-a77cb7a9822c', usernameVariable: 'ARTIFACTORY_USERNAME', passwordVariable: 'ARTIFACTORY_PASSWORD')
 def JENKINS_PRIVATE_SSH_KEY = file(credentialsId: 'docs.spring.io-jenkins_private_ssh_key', variable: 'DEPLOY_SSH_KEY')
-def SONAR_LOGIN = string(credentialsId: 'spring-sonar.login', variable: 'SONAR_LOGIN')
+def SONAR_LOGIN_CREDENTIALS = string(credentialsId: 'spring-sonar.login', variable: 'SONAR_LOGIN')
 
 def jdkEnv(String jdk = 'jdk8') {
 	def jdkTool = tool(jdk)
@@ -55,7 +55,7 @@ try {
 			node {
 				checkout scm
 				sh "git clean -dfx"
-				withCredentials([SONAR_LOGIN,
+				withCredentials([SONAR_LOGIN_CREDENTIALS,
 					GRADLE_ENTERPRISE_CACHE_USER,
 					GRADLE_ENTERPRISE_SECRET_ACCESS_KEY]) {
 					try {
