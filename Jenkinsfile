@@ -12,6 +12,11 @@ def GRADLE_ENTERPRISE_CACHE_USER = usernamePassword(credentialsId: 'gradle_enter
 									usernameVariable: 'GRADLE_ENTERPRISE_CACHE_USERNAME')
 def GRADLE_ENTERPRISE_SECRET_ACCESS_KEY = string(credentialsId: 'gradle_enterprise_secret_access_key',
 								variable: 'GRADLE_ENTERPRISE_ACCESS_KEY')
+def SPRING_SIGNING_SECRING = file(credentialsId: 'spring-signing-secring.gpg', variable: 'SIGNING_KEYRING_FILE')
+def SPRING_GPG_PASSPHRASE = string(credentialsId: 'spring-gpg-passphrase', variable: 'SIGNING_PASSWORD')
+def OSSRH_CREDENTIALS = usernamePassword(credentialsId: 'oss-token', passwordVariable: 'OSSRH_PASSWORD', usernameVariable: 'OSSRH_USERNAME')
+def ARTIFACTORY_CREDENTIALS = usernamePassword(credentialsId: '02bd1690-b54f-4c9f-819d-a77cb7a9822c', usernameVariable: 'ARTIFACTORY_USERNAME', passwordVariable: 'ARTIFACTORY_PASSWORD')
+def JENKINS_PRIVATE_SSH_KEY = file(credentialsId: 'docs.spring.io-jenkins_private_ssh_key', variable: 'DEPLOY_SSH_KEY')
 
 def jdkEnv(String jdk = 'jdk8') {
 	def jdkTool = tool(jdk)
@@ -27,10 +32,11 @@ try {
 				try {
 					withCredentials([GRADLE_ENTERPRISE_CACHE_USER,
 						GRADLE_ENTERPRISE_SECRET_ACCESS_KEY]) {
-							withEnv([jdkEnv(),
+						withEnv([jdkEnv(),
 							"GRADLE_ENTERPRISE_CACHE_USERNAME=${GRADLE_ENTERPRISE_CACHE_USERNAME}",
 							"GRADLE_ENTERPRISE_CACHE_PASSWORD=${GRADLE_ENTERPRISE_CACHE_PASSWORD}",
 							"GRADLE_ENTERPRISE_ACCESS_KEY=${GRADLE_ENTERPRISE_ACCESS_KEY}"]) {
+
 							sh "./gradlew check --stacktrace"
 						}
 					}
@@ -50,7 +56,7 @@ try {
 				sh "git clean -dfx"
 				withCredentials([string(credentialsId: 'spring-sonar.login', variable: 'SONAR_LOGIN')]) {
 					try {
-						withEnv(["JAVA_HOME=${ tool 'jdk8' }"]) {
+						withEnv([jdkEnv()]) {
 							if ("master" == env.BRANCH_NAME) {
 								sh "./gradlew sonarqube -PexcludeProjects='**/samples/**' -Dsonar.host.url=$SPRING_SONAR_HOST_URL -Dsonar.login=$SONAR_LOGIN --stacktrace"
 							} else {
@@ -71,8 +77,15 @@ try {
 				checkout scm
 				sh "git clean -dfx"
 				try {
-					withEnv(["JAVA_HOME=${ tool 'jdk8' }"]) {
-						sh "./gradle test -PforceMavenRepositories=snapshot -PspringVersion='5.+' -PreactorVersion=Dysprosium-BUILD-SNAPSHOT -PspringDataVersion=Lovelace-BUILD-SNAPSHOT -PlocksDisabled --stacktrace"
+					withCredentials([GRADLE_ENTERPRISE_CACHE_USER,
+						GRADLE_ENTERPRISE_SECRET_ACCESS_KEY]) {
+						withEnv([jdkEnv(),
+							"GRADLE_ENTERPRISE_CACHE_USERNAME=${GRADLE_ENTERPRISE_CACHE_USERNAME}",
+							"GRADLE_ENTERPRISE_CACHE_PASSWORD=${GRADLE_ENTERPRISE_CACHE_PASSWORD}",
+							"GRADLE_ENTERPRISE_ACCESS_KEY=${GRADLE_ENTERPRISE_ACCESS_KEY}"]) {
+
+							sh "./gradle test -PforceMavenRepositories=snapshot -PspringVersion='5.+' -PreactorVersion=Dysprosium-BUILD-SNAPSHOT -PspringDataVersion=Lovelace-BUILD-SNAPSHOT -PlocksDisabled --stacktrace"
+						}
 					}
 				} catch(Exception e) {
 					currentBuild.result = 'FAILED: snapshots'
@@ -87,8 +100,14 @@ try {
 				checkout scm
 				sh "git clean -dfx"
 				try {
-					withEnv(["JAVA_HOME=${ tool 'jdk9' }"]) {
-						sh "./gradle test --stacktrace"
+					withCredentials([GRADLE_ENTERPRISE_CACHE_USER,
+						GRADLE_ENTERPRISE_SECRET_ACCESS_KEY]) {
+						withEnv([jdkEnv("jdk9"),
+							"GRADLE_ENTERPRISE_CACHE_USERNAME=${GRADLE_ENTERPRISE_CACHE_USERNAME}",
+							"GRADLE_ENTERPRISE_CACHE_PASSWORD=${GRADLE_ENTERPRISE_CACHE_PASSWORD}",
+							"GRADLE_ENTERPRISE_ACCESS_KEY=${GRADLE_ENTERPRISE_ACCESS_KEY}"]) {
+
+							sh "./gradle test --stacktrace"
 					}
 				} catch(Exception e) {
 					currentBuild.result = 'FAILED: jdk9'
@@ -103,8 +122,14 @@ try {
 				checkout scm
 				sh "git clean -dfx"
 				try {
-					withEnv(["JAVA_HOME=${ tool 'jdk10' }"]) {
-						sh "./gradle test --stacktrace"
+					withCredentials([GRADLE_ENTERPRISE_CACHE_USER,
+						GRADLE_ENTERPRISE_SECRET_ACCESS_KEY]) {
+						withEnv([jdkEnv("jdk10"),
+							"GRADLE_ENTERPRISE_CACHE_USERNAME=${GRADLE_ENTERPRISE_CACHE_USERNAME}",
+							"GRADLE_ENTERPRISE_CACHE_PASSWORD=${GRADLE_ENTERPRISE_CACHE_PASSWORD}",
+							"GRADLE_ENTERPRISE_ACCESS_KEY=${GRADLE_ENTERPRISE_ACCESS_KEY}"]) {
+
+							sh "./gradle test --stacktrace"
 					}
 				} catch(Exception e) {
 					currentBuild.result = 'FAILED: jdk10'
@@ -119,8 +144,14 @@ try {
 				checkout scm
 				sh "git clean -dfx"
 				try {
-					withEnv(["JAVA_HOME=${ tool 'jdk11' }"]) {
-						sh "./gradle test --stacktrace"
+					withCredentials([GRADLE_ENTERPRISE_CACHE_USER,
+						GRADLE_ENTERPRISE_SECRET_ACCESS_KEY]) {
+						withEnv([jdkEnv("jdk11"),
+							"GRADLE_ENTERPRISE_CACHE_USERNAME=${GRADLE_ENTERPRISE_CACHE_USERNAME}",
+							"GRADLE_ENTERPRISE_CACHE_PASSWORD=${GRADLE_ENTERPRISE_CACHE_PASSWORD}",
+							"GRADLE_ENTERPRISE_ACCESS_KEY=${GRADLE_ENTERPRISE_ACCESS_KEY}"]) {
+
+							sh "./gradle test --stacktrace"
 					}
 				} catch(Exception e) {
 					currentBuild.result = 'FAILED: jdk11'
@@ -135,8 +166,14 @@ try {
 				checkout scm
 				sh "git clean -dfx"
 				try {
-					withEnv(["JAVA_HOME=${ tool 'openjdk12' }"]) {
-						sh "./gradle test --stacktrace"
+					withCredentials([GRADLE_ENTERPRISE_CACHE_USER,
+						GRADLE_ENTERPRISE_SECRET_ACCESS_KEY]) {
+						withEnv([jdkEnv("jdk12"),
+							"GRADLE_ENTERPRISE_CACHE_USERNAME=${GRADLE_ENTERPRISE_CACHE_USERNAME}",
+							"GRADLE_ENTERPRISE_CACHE_PASSWORD=${GRADLE_ENTERPRISE_CACHE_PASSWORD}",
+							"GRADLE_ENTERPRISE_ACCESS_KEY=${GRADLE_ENTERPRISE_ACCESS_KEY}"]) {
+
+							sh "./gradle test --stacktrace"
 					}
 				} catch(Exception e) {
 					currentBuild.result = 'FAILED: jdk12'
@@ -152,15 +189,17 @@ try {
 				node {
 					checkout scm
 					sh "git clean -dfx"
-					withCredentials([file(credentialsId: 'spring-signing-secring.gpg', variable: 'SIGNING_KEYRING_FILE')]) {
-						withCredentials([string(credentialsId: 'spring-gpg-passphrase', variable: 'SIGNING_PASSWORD')]) {
-							withCredentials([usernamePassword(credentialsId: 'oss-token', passwordVariable: 'OSSRH_PASSWORD', usernameVariable: 'OSSRH_USERNAME')]) {
-								withCredentials([usernamePassword(credentialsId: '02bd1690-b54f-4c9f-819d-a77cb7a9822c', usernameVariable: 'ARTIFACTORY_USERNAME', passwordVariable: 'ARTIFACTORY_PASSWORD')]) {
-									withEnv(["JAVA_HOME=${ tool 'jdk8' }"]) {
-										sh "./gradlew deployArtifacts finalizeDeployArtifacts -Psigning.secretKeyRingFile=$SIGNING_KEYRING_FILE -Psigning.keyId=$SPRING_SIGNING_KEYID -Psigning.password='$SIGNING_PASSWORD' -PossrhUsername=$OSSRH_USERNAME -PossrhPassword=$OSSRH_PASSWORD -PartifactoryUsername=$ARTIFACTORY_USERNAME -PartifactoryPassword=$ARTIFACTORY_PASSWORD --stacktrace"
-									}
-								}
-							}
+					withCredentials([SPRING_SIGNING_SECRING,
+						SPRING_GPG_PASSPHRASE,
+						OSSRH_CREDENTIALS,
+						ARTIFACTORY_CREDENTIALS,
+						GRADLE_ENTERPRISE_CACHE_USER,
+						GRADLE_ENTERPRISE_SECRET_ACCESS_KEY]) {
+						withEnv([jdkEnv(),
+							"GRADLE_ENTERPRISE_CACHE_USERNAME=${GRADLE_ENTERPRISE_CACHE_USERNAME}",
+							"GRADLE_ENTERPRISE_CACHE_PASSWORD=${GRADLE_ENTERPRISE_CACHE_PASSWORD}",
+							"GRADLE_ENTERPRISE_ACCESS_KEY=${GRADLE_ENTERPRISE_ACCESS_KEY}"]) {
+							sh "./gradlew deployArtifacts finalizeDeployArtifacts -Psigning.secretKeyRingFile=$SIGNING_KEYRING_FILE -Psigning.keyId=$SPRING_SIGNING_KEYID -Psigning.password='$SIGNING_PASSWORD' -PossrhUsername=$OSSRH_USERNAME -PossrhPassword=$OSSRH_PASSWORD -PartifactoryUsername=$ARTIFACTORY_USERNAME -PartifactoryPassword=$ARTIFACTORY_PASSWORD --stacktrace"
 						}
 					}
 				}
@@ -171,8 +210,8 @@ try {
 				node {
 					checkout scm
 					sh "git clean -dfx"
-					withCredentials([file(credentialsId: 'docs.spring.io-jenkins_private_ssh_key', variable: 'DEPLOY_SSH_KEY')]) {
-						withEnv(["JAVA_HOME=${ tool 'jdk8' }"]) {
+					withCredentials([JENKINS_PRIVATE_SSH_KEY]) {
+						withEnv([jdkEnv()]) {
 							sh "./gradlew deployDocs -PdeployDocsSshKeyPath=$DEPLOY_SSH_KEY -PdeployDocsSshUsername=$SPRING_DOCS_USERNAME --stacktrace"
 						}
 					}
@@ -184,8 +223,8 @@ try {
 				node {
 					checkout scm
 					sh "git clean -dfx"
-					withCredentials([file(credentialsId: 'docs.spring.io-jenkins_private_ssh_key', variable: 'DEPLOY_SSH_KEY')]) {
-						withEnv(["JAVA_HOME=${ tool 'jdk8' }"]) {
+					withCredentials([JENKINS_PRIVATE_SSH_KEY]) {
+						withEnv([jdkEnv()]) {
 							sh "./gradlew deploySchema -PdeployDocsSshKeyPath=$DEPLOY_SSH_KEY -PdeployDocsSshUsername=$SPRING_DOCS_USERNAME --stacktrace"
 						}
 					}
