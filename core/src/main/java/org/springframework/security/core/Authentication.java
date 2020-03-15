@@ -65,6 +65,7 @@ public interface Authentication extends Principal, Serializable {
 	 * @return the authorities granted to the principal, or an empty collection if the
 	 * token has not been authenticated. Never null.
 	 */
+	// 获取权限集合
 	Collection<? extends GrantedAuthority> getAuthorities();
 
 	/**
@@ -74,6 +75,7 @@ public interface Authentication extends Principal, Serializable {
 	 *
 	 * @return the credentials that prove the identity of the <code>Principal</code>
 	 */
+	// 凭证 就相当于密码
 	Object getCredentials();
 
 	/**
@@ -83,6 +85,7 @@ public interface Authentication extends Principal, Serializable {
 	 * @return additional details about the authentication request, or <code>null</code>
 	 * if not used
 	 */
+	// 认证时包含的一些信息
 	Object getDetails();
 
 	/**
@@ -98,6 +101,7 @@ public interface Authentication extends Principal, Serializable {
 	 * @return the <code>Principal</code> being authenticated or the authenticated
 	 * principal after authentication.
 	 */
+	// 主角？也就是用户名
 	Object getPrincipal();
 
 	/**
@@ -119,6 +123,7 @@ public interface Authentication extends Principal, Serializable {
 	 * <code>AbstractSecurityInterceptor</code> does not need to present the token to the
 	 * <code>AuthenticationManager</code> again for re-authentication.
 	 */
+	// 是否被认证  @return true if the token has been authenticated
 	boolean isAuthenticated();
 
 	/**
@@ -139,5 +144,6 @@ public interface Authentication extends Principal, Serializable {
 	 * implementation being immutable or implementing its own alternative approach to
 	 * {@link #isAuthenticated()}
 	 */
+	// 设置认证是否通过
 	void setAuthenticated(boolean isAuthenticated) throws IllegalArgumentException;
 }

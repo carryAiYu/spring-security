@@ -184,8 +184,9 @@ public class ProviderManager implements AuthenticationManager, MessageSourceAwar
 		Authentication result = null;
 		Authentication parentResult = null;
 		boolean debug = logger.isDebugEnabled();
-
+		// 遍历所有provider
 		for (AuthenticationProvider provider : getProviders()) {
+			// 使用supports方法验证它能够处理当前token
 			if (!provider.supports(toTest)) {
 				continue;
 			}
@@ -196,6 +197,7 @@ public class ProviderManager implements AuthenticationManager, MessageSourceAwar
 			}
 
 			try {
+				// 支持就调用authenticate方法执行认证逻辑
 				result = provider.authenticate(authentication);
 
 				if (result != null) {
@@ -212,7 +214,7 @@ public class ProviderManager implements AuthenticationManager, MessageSourceAwar
 				lastException = e;
 			}
 		}
-
+		// 如果父AuthenticationManager存在，就使用父manager进行验证
 		if (result == null && parent != null) {
 			// Allow the parent to try.
 			try {
@@ -230,6 +232,7 @@ public class ProviderManager implements AuthenticationManager, MessageSourceAwar
 		}
 
 		if (result != null) {
+			// 是否擦除敏感信息
 			if (eraseCredentialsAfterAuthentication
 					&& (result instanceof CredentialsContainer)) {
 				// Authentication is complete. Remove credentials and other secret data

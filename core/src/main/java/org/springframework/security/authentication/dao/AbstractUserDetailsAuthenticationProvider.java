@@ -141,6 +141,7 @@ public abstract class AbstractUserDetailsAuthenticationProvider implements
 			cacheWasUsed = false;
 
 			try {
+				// 获取用户信息
 				user = retrieveUser(username,
 						(UsernamePasswordAuthenticationToken) authentication);
 			}
@@ -162,7 +163,9 @@ public abstract class AbstractUserDetailsAuthenticationProvider implements
 		}
 
 		try {
+			// 预检查 判断用户是否过期、锁定、账户冻结
 			preAuthenticationChecks.check(user);
+			// 子类自定义一些额外检查
 			additionalAuthenticationChecks(user,
 					(UsernamePasswordAuthenticationToken) authentication);
 		}
@@ -181,7 +184,7 @@ public abstract class AbstractUserDetailsAuthenticationProvider implements
 				throw exception;
 			}
 		}
-
+		// 检查密码是否过期
 		postAuthenticationChecks.check(user);
 
 		if (!cacheWasUsed) {
