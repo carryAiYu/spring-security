@@ -129,6 +129,8 @@ public class WebSecurityConfiguration implements ImportAware, BeanClassLoaderAwa
 	@Autowired(required = false)
 	public void setFilterChainProxySecurityConfigurer(
 			ObjectPostProcessor<Object> objectPostProcessor,
+			// 自动注入SecurityConfigurer 如果存在的话
+			// 我们配置只需要继承SecurityConfigurer就可以了
 			@Value("#{@autowiredWebSecurityConfigurersIgnoreParents.getWebSecurityConfigurers()}") List<SecurityConfigurer<Filter, WebSecurity>> webSecurityConfigurers)
 			throws Exception {
 		webSecurity = objectPostProcessor
@@ -137,7 +139,7 @@ public class WebSecurityConfiguration implements ImportAware, BeanClassLoaderAwa
 			webSecurity.debug(debugEnabled);
 		}
 
-		webSecurityConfigurers.sort(AnnotationAwareOrderComparator.INSTANCE);
+ 		webSecurityConfigurers.sort(AnnotationAwareOrderComparator.INSTANCE);
 
 		Integer previousOrder = null;
 		Object previousConfig = null;
@@ -152,6 +154,7 @@ public class WebSecurityConfiguration implements ImportAware, BeanClassLoaderAwa
 			previousOrder = order;
 			previousConfig = config;
 		}
+		// 依次应用SecurityConfigurer
 		for (SecurityConfigurer<Filter, WebSecurity> webSecurityConfigurer : webSecurityConfigurers) {
 			webSecurity.apply(webSecurityConfigurer);
 		}

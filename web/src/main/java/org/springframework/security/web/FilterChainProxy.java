@@ -195,6 +195,7 @@ public class FilterChainProxy extends GenericFilterBean {
 		HttpServletResponse fwResponse = firewall
 				.getFirewalledResponse((HttpServletResponse) response);
 
+		// 获取请求对应的filters
 		List<Filter> filters = getFilters(fwRequest);
 
 		if (filters == null || filters.size() == 0) {
@@ -212,6 +213,7 @@ public class FilterChainProxy extends GenericFilterBean {
 		}
 
 		VirtualFilterChain vfc = new VirtualFilterChain(fwRequest, chain, filters);
+		//
 		vfc.doFilter(fwRequest, fwResponse);
 	}
 

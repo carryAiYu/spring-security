@@ -1,11 +1,10 @@
-![Gitter](https://gitter.im/spring-projects/spring-security?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-
+ 
 # Spring Security
 
-Spring Security provides security services for the https://docs.spring.io[Spring IO Platform]. Spring Security 5.0 requires Spring 5.0 as
+Spring Security provides security services for the [Spring IO Platform](https://docs.spring.io). Spring Security 5.0 requires Spring 5.0 as
 a minimum and also requires Java 8.
 
-For a detailed list of features and access to the latest release, please visit https://spring.io/projects[Spring projects].
+For a detailed list of features and access to the latest release, please visit [Spring projects](https://spring.io/projects).
 
 # 原理
 
@@ -21,19 +20,20 @@ For a detailed list of features and access to the latest release, please visit h
 
 [`UserDetailsManager`](./core/src/main/java/org/springframework/security/provisioning/UserDetailsManager.java) 扩展`UserDetailsService`提供用户的创建和更新能力。
 
-#### 上述几个接口的关系
-`AuthenticationManager`统一处理所有验证，内部获取到`Authtication`类型之后就分派给能处理该特定类型的`AuthenticationProvider`进行处理，
-`AuthenticationProvider`中通过`UserDetailsService`的获取用户信息完成校验。
+### 上述几个接口的关系
+`AuthenticationManager`统一处理所有验证，内部获取到`Authtication`类型之后就分派给能处理该特定类型的`AuthenticationProvider`进行处理，    
+`AuthenticationProvider`中通过`UserDetailsService`的获取用户信息完成校验。    
+
 你想问`UserDetailsManager`去哪儿了？
 ```java
 public interface UserDetailsManager extends UserDetailsService {
 }
 ```
-上面有说`UserDetailManager`扩展自`UserDetailsService`。 
+`UserDetailManager`扩展自`UserDetailsService`。 
 
 
-#### Spring Security中的默认实现
-[`ProviderManager`](./core/src/main/java/org/springframework/security/authentication/ProviderManager.java) 是`AuthenticationManager`的默认实现
+### Spring Security中的默认实现
+1. [`ProviderManager`](./core/src/main/java/org/springframework/security/authentication/ProviderManager.java) 是`AuthenticationManager`的默认实现
 
 ```
 	public Authentication authenticate(Authentication authentication)
@@ -129,7 +129,7 @@ public interface UserDetailsManager extends UserDetailsService {
 
 ```
 
-[`UsernamePasswordAuthenticationToken`](./core/src/main/java/org/springframework/security/authentication/UsernamePasswordAuthenticationToken.java) 是比较常用的实现
+2. [`UsernamePasswordAuthenticationToken`](./core/src/main/java/org/springframework/security/authentication/UsernamePasswordAuthenticationToken.java) 是比较常用的实现
 
 它对应的`AuthenticationProvider`是[`AbstractUserDetailsAuthenticationProvider`](./core/src/main/java/org/springframework/security/authentication/dao/AbstractUserDetailsAuthenticationProvider.java)
 `AbstractUserDetailsAuthenticationProvider`是一个抽象类，它的实现者是[`DaoAuthenticationProvider`](./core/src/main/java/org/springframework/security/authentication/dao/DaoAuthenticationProvider.java)
@@ -217,22 +217,69 @@ public interface UserDetailsManager extends UserDetailsService {
 	}
 ```
 
-[`JdbcUserDetailsManager`](./core/src/main/java/org/springframework/security/provisioning/JdbcUserDetailsManager.java) 
+3. [`JdbcUserDetailsManager`](./core/src/main/java/org/springframework/security/provisioning/JdbcUserDetailsManager.java) 
 提供了基于JDBC的用户的crud方法
 
 
 
 了解了上面的流程我们就能方便的对Spring Security进行扩展
+[短信验证码登录扩展](./samples/custom/sms/README.md)
+
+
+## Spring Security过滤器链
+
+[`FilterChainProxy`](./web/src/main/java/org/springframework/security/web/FilterChainProxy.java) 代理所有Spring管理的filter
 
 
 
 
 
 
+## 自动配置
 
-   
-# Contributing
-https://help.github.com/articles/creating-a-pull-request[Pull requests] are welcome; see the https://github.com/spring-projects/spring-security/blob/master/CONTRIBUTING.md[contributor guidelines] for details.
+[`WebSecurityConfiguration`](./config/src/main/java/org/springframework/security/config/annotation/web/configuration/WebSecurityConfiguration.java) 核心配置类
+
+```
+@Autowired(required = false)
+	public void setFilterChainProxySecurityConfigurer(
+			ObjectPostProcessor<Object> objectPostProcessor,
+			// 自动注入SecurityConfigurer 如果存在的话
+			// 我们配置只需要继承SecurityConfigurer就可以了
+			@Value("#{@autowiredWebSecurityConfigurersIgnoreParents.getWebSecurityConfigurers()}") List<SecurityConfigurer<Filter, WebSecurity>> webSecurityConfigurers)
+			throws Exception {
+		webSecurity = objectPostProcessor
+				.postProcess(new WebSecurity(objectPostProcessor));
+		if (debugEnabled != null) {
+			webSecurity.debug(debugEnabled);
+		}
+ 
+ 		webSecurityConfigurers.sort(AnnotationAwareOrderComparator.INSTANCE);
+
+		Integer previousOrder = null;
+		Object previousConfig = null;
+		for (SecurityConfigurer<Filter, WebSecurity> config : webSecurityConfigurers) {
+			Integer order = AnnotationAwareOrderComparator.lookupOrder(config);
+			if (previousOrder != null && previousOrder.equals(order)) {
+				throw new IllegalStateException(
+						"@Order on WebSecurityConfigurers must be unique. Order of "
+								+ order + " was already used on " + previousConfig + ", so it cannot be used on "
+								+ config + " too.");
+			}
+			previousOrder = order;
+			previousConfig = config;
+		}
+		// 依次应用SecurityConfigurer
+		for (SecurityConfigurer<Filter, WebSecurity> webSecurityConfigurer : webSecurityConfigurers) {
+			webSecurity.apply(webSecurityConfigurer);
+		}
+		this.webSecurityConfigurers = webSecurityConfigurers;
+	}
+```
+
+[`WebSecurity`](./config/src/main/java/org/springframework/security/config/annotation/web/builders/WebSecurity.java) 
+
+
+
 
 # License
 Spring Security is Open Source software released under the
